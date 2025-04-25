@@ -7,6 +7,7 @@ from agents import Agent, Runner
 from prompts import supervisor_prompt, emotional_prompt
 from typing import Literal
 from langgraph_config import SupervisorState, EmotionalState
+from pydantic import BaseModel
 
 # Konfiguracja logowania
 logging.basicConfig(
@@ -30,7 +31,6 @@ agent_supervisor = Agent(
     model = "gpt-4o-mini",
     instructions = supervisor_prompt,
     output_type = SupervisorAgentOutput
-
 )
 
 agent_emotional = Agent(
