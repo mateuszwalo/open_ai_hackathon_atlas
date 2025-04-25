@@ -1,10 +1,6 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-from langgraph_config import graph
-
 app = FastAPI()
 
+# Pydantic Model do odbierania danych
 class AgentInput(BaseModel):
     message: str
     thread_id: Optional[str] = ""
@@ -22,7 +18,8 @@ async def run_openai_agent(input_data: AgentInput):
 
         # Wywołanie grafu (używając ainvoke dla async)
         result = await graph.ainvoke(state)
-        
+
+        # Zwrócenie odpowiedzi
         return {
             "response": result.get("message", ""),
             "thread_id": result.get("thread_id", "")
