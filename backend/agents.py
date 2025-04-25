@@ -19,7 +19,7 @@ load_dotenv(".env")
 
 # Inicjalizacja klienta OpenAI
 client = AsyncOpenAI(
-    api_key="OPENAI_API_KEY",
+    api_key=os.getenv("OPENAI_API_KEY"),
     default_headers={"OpenAI-Beta": "assistants=v2"}
 )
 
