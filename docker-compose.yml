@@ -1,0 +1,83 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: langgraph_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    env_file:
+      - .env
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - postgres
+      - mongo
+      - neo4j
+      - redis
+    environment:
+      DB_URL: ${DB_URL}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      MONGO_URI: ${MONGO_URI}
+      NEO4J_HOST: ${NEO4J_HOST}
+      NEO4J_PORT: ${NEO4J_PORT}
+
+  postgres:
+    image: postgres:14
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - target: 5432
+        published: 5432
+        protocol: tcp
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo:6
+    container_name: mongo_db
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      MONGO_DB: ${MONGO_DB}
+    ports:
+      - target: 27017
+        published: 27017
+        protocol: tcp
+    volumes:
+      - mongodata:/data/db
+
+  neo4j:
+    image: neo4j:5.14
+    container_name: neo4j_db
+    ports:
+      - target: 7474
+        published: 7474
+        protocol: tcp
+      - target: 7687
+        published: 7687
+        protocol: tcp
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH}
+    volumes:
+      - neo4jdata:/data
+
+  redis:
+    image: redis:7
+    container_name: redis_cache
+    ports:
+      - target: 6379
+        published: 6379
+        protocol: tcp
+
+volumes:
+  pgdata:
+  mongodata:
+  neo4jdata:
