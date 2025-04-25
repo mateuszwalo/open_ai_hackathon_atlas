@@ -14,3 +14,6 @@ redis==5.0.1
 python-dotenv==1.0.1
 httpx==0.27.0
 openai-agents
+faiss-cpu==1.8.0  # lub faiss-gpu jeśli masz CUDA
+sentence-transformers==2.7.0
+pypdf==3.17.4  # do wczytywania PDF
