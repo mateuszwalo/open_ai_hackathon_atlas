@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph
-from agents import openai_agent_step
+from agents_logic import openai_agent_step
 
 def build_graph():
     builder = StateGraph(dict)  # Używamy prostego dict zamiast AgentState
