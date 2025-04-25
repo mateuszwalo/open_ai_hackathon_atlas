@@ -6,6 +6,7 @@ from openai import AsyncOpenAI
 from typing import Dict, Any
 from fastapi import FastAPI, HTTPException
 from agents import Agent, Runner
+from prompts import supervisor_prompt
 
 
 # Konfiguracja logowania
@@ -18,20 +19,14 @@ logger = logging.getLogger(__name__)
 # Ładowanie zmiennych środowiskowych
 load_dotenv(".env")
 
-# Inicjalizacja klienta OpenAI
-client = AsyncOpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    default_headers={"OpenAI-Beta": "assistants=v2"}
-)
-
-agent = Agent(
-    name="Math Tutor",
+agent_supervisor = Agent(
+    name = "Supervisor",
     model = "gpt-4o-mini",
-    instructions="Co drugie słowo w odpowiedzi powinno być pogrubione.",
+    instructions = supervisor_prompt,
 )
 
-async def openai_agent_step(state: Dict[str, Any]) -> Dict[str, Any]:
-    result = await Runner.run(agent, state["message"])
+async def supervisor_step(state: Dict[str, Any]) -> Dict[str, Any]:
+    result = await Runner.run(agent_supervisor, state["message"])
 
     return {
             "message": result.final_output,
