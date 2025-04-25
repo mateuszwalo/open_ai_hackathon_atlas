@@ -6,8 +6,9 @@ from typing import Dict, Any
 from agents import Agent, Runner
 from prompts import supervisor_prompt, emotional_prompt
 from typing import Literal
-from langgraph_config import SupervisorState, EmotionalState
+from states import SupervisorState, EmotionalState
 from pydantic import BaseModel
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 # Konfiguracja logowania
 logging.basicConfig(
@@ -41,19 +42,37 @@ agent_emotional = Agent(
 )
 
 
-async def supervisor_step(state:SupervisorState) -> Dict[str, Any]:
-    result = await Runner.run(agent_supervisor, state["messages"][-1])
+async def supervisor_step(state:SupervisorState):
+    try:
+        print(f"State: {state}")
+        if not state["messages"]:
+            raise ValueError("State messages are empty or invalid.")
+        
+        history_as_text = ""
+        for msg in state["messages"]:
+            if isinstance(msg, HumanMessage):
+                history_as_text += f"Human: {msg.content}\n"
+            elif isinstance(msg, AIMessage):
+                history_as_text += f"AI: {msg.content}\n"
 
-    return {
-            "messages": result.message,
+        result = await Runner.run(agent_supervisor, history_as_text)
+        if not result:
+            raise ValueError("Runner.run returned None.")
+
+        print(result)
+        return {
+            "messages": AIMessage(result.final_output.message),
             "thread_id": state.get("thread_id", ""),
-            "action": result.action
+            "action": result.final_output.action
         }
+    except Exception as e:
+        logger.error(f"Error in supervisor_step: {e}")
+        raise
 
 async def emotional_step(state:EmotionalState) -> Dict[str, Any]:
-    result = await Runner.run(agent_emotional, state["messages"][-1])
+    result = await Runner.run(agent_emotional, state["messages"][-1].content)
 
     return {
-            "messages": result.message,
+            "messages": AIMessage(result.final_output.message),
             "thread_id": state.get("thread_id", "")
         }

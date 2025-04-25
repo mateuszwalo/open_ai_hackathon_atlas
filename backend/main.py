@@ -19,23 +19,26 @@ async def run_openai_agent(input_data: AgentInput):
     print(f"🔍 Odebrano dane: {input_data.model_dump()}")
 
     try:
-        # Przygotowanie stanu dla LangGraph
         state = {
-            "message": input_data.message,
-            "thread_id": input_data.thread_id or ""
+            "messages": [input_data.message],
+            "thread_id": input_data.thread_id or "",
+            'action': ""  # lub inna akcja, jeśli jest potrzebna
         }
 
-        # Wywołanie grafu (używając ainvoke dla async)
         result = await graph.ainvoke(state)
 
-        # Zwrócenie odpowiedzi
+        if not result:
+            raise ValueError("Graph invocation returned None.")
+        
+        print(f"🔍 Wynik: {result}")
+
         return {
-            "response": result.get("message", ""),
+            "response": result["messages"][-1].content,
             "thread_id": result.get("thread_id", "")
         }
     except Exception as e:
         print(f"💥 Błąd podczas przetwarzania: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @app.post("/human_input")
 async def provide_human_input(input_data: HumanInput):
@@ -45,7 +48,8 @@ async def provide_human_input(input_data: HumanInput):
         # Retrieve the paused state using thread_id (from a persistent store or in-memory store)
         paused_state = {
             "thread_id": input_data.thread_id,
-            "message": input_data.input_message
+            "messages": [input_data.input_message],
+            "action": ""  # or whatever action is appropriate
         }
 
         # Resume the graph execution
