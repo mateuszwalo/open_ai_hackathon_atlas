@@ -1,3 +1,7 @@
+from typing import Optional
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from langgraph_config import graph
 app = FastAPI()
 
 # Pydantic Model do odbierania danych
