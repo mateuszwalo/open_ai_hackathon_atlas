@@ -1,4 +1,3 @@
-// filepath: c:\Users\maksk\Desktop\TheHack\open_ai_hackathon_atlas\frontend\src\components\layout\Sidebar.vue
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useChatStore } from '@/stores/chatStore';
@@ -22,12 +21,18 @@ function selectChat(threadId: string) {
   // Placeholder: Implement logic to load a specific chat thread
   console.log('Load chat:', threadId);
   // Example: chatStore.loadConversation(threadId);
+  // Navigate back to chat view if selecting a chat
+  router.push('/');
 }
 
 function startNewChat() {
   chatStore.startNewConversation();
   // Optionally navigate if needed, though ChatView might handle the display update
-  // router.push('/');
+  router.push('/');
+}
+
+function goToJournal() {
+  router.push('/journal');
 }
 
 function goToAccount() {
@@ -49,6 +54,9 @@ function handleLogout() {
 
 <template>
   <aside class="sidebar">
+    <button @click="goToJournal" class="journal-button">
+      📅 Daily Journal
+    </button>
     <button @click="startNewChat" class="new-chat-button">
       + New Chat
     </button>
@@ -94,18 +102,33 @@ function handleLogout() {
   font-family: 'Switzer', sans-serif;
 }
 
+.journal-button, /* Add journal button to shared styles */
 .new-chat-button {
-  background-color: #3c8a38; /* Primary green */
-  color: white;
   border: none;
   border-radius: 8px;
   padding: 0.75rem 1rem;
-  margin: 1rem;
+  margin: 0.5rem 1rem 0.5rem 1rem; /* Adjust margin */
   font-family: 'Nohemi', sans-serif;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  text-align: center; /* Center text */
+}
+
+.journal-button {
+  background-color: #a2e59f; /* Accent light green */
+  color: #212121; /* Dark text */
+  margin-top: 1rem; /* Add margin top */
+}
+.journal-button:hover {
+  background-color: #8bc34a; /* Slightly darker accent green */
+}
+
+.new-chat-button {
+  background-color: #3c8a38; /* Primary green */
+  color: white;
+  /* margin-top: 0.5rem; Remove top margin if journal button is above */
 }
 .new-chat-button:hover {
   background-color: #2e6b2c; /* Darker green */
@@ -115,6 +138,7 @@ function handleLogout() {
   flex-grow: 1; /* Takes available space */
   overflow-y: auto;
   padding: 0 1rem;
+  margin-top: 1rem; /* Add space above history */
 }
 .chat-history h2 {
   font-family: 'Nohemi', sans-serif;

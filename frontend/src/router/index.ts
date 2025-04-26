@@ -3,6 +3,7 @@ import ChatView from '../views/ChatView.vue';
 import LoginView from '../views/LoginView.vue';
 import RegisterView from '../views/RegisterView.vue';
 import QuestionnaireView from '../views/QuestionnaireView.vue';
+import JournalView from '../views/JournalView.vue'; // Import the new view
 import { useAuthStore } from '@/stores/authStore';
 import { useQuestionnaireStore } from '@/stores/questionnaireStore';
 
@@ -32,6 +33,12 @@ const router = createRouter({
       name: 'questionnaire',
       component: QuestionnaireView,
       meta: { requiresAuth: true }
+    },
+    { // Add the new route for the journal
+      path: '/journal',
+      name: 'journal',
+      component: JournalView,
+      meta: { requiresAuth: true } // Assuming journal requires login
     }
   ]
 });
@@ -48,25 +55,53 @@ router.beforeEach(async (to, from, next) => {
     next({ name: 'login' });
     return;
   }
-  
+
   if (requiresGuest && authStore.isLoggedIn) {
-    next({ name: 'chat' });
+    // If logged in user tries to access login/register, redirect based on questionnaire status
+    const questionnaireStore = useQuestionnaireStore();
+    // Ensure status is checked if userId exists
+    if (authStore.userId) {
+        await questionnaireStore.checkCompletionStatus(authStore.userId);
+    }
+
+    if (questionnaireStore.isCompleted) {
+        next({ name: 'chat' }); // Go to chat if questionnaire is done
+    } else {
+        next({ name: 'questionnaire' }); // Go to questionnaire if not done
+    }
     return;
   }
 
-  // Handle questionnaire redirects
+
+  // Handle questionnaire redirects ONLY if requiresQuestionnaire is set
   if (requiresQuestionnaire && authStore.isLoggedIn) {
     // Check if user has completed the questionnaire
     const questionnaireStore = useQuestionnaireStore();
-    await questionnaireStore.checkCompletionStatus(authStore.userId);
-    
+    // Ensure status is checked if userId exists
+    if (authStore.userId) {
+        await questionnaireStore.checkCompletionStatus(authStore.userId);
+    }
+
     if (!questionnaireStore.isCompleted) {
       next({ name: 'questionnaire' });
       return;
     }
   }
 
-  next();
+  // If trying to access questionnaire directly after completing it, redirect to chat
+  if (to.name === 'questionnaire' && authStore.isLoggedIn) {
+      const questionnaireStore = useQuestionnaireStore();
+      if (authStore.userId) {
+          await questionnaireStore.checkCompletionStatus(authStore.userId);
+      }
+      if (questionnaireStore.isCompleted) {
+          next({ name: 'chat' });
+          return;
+      }
+  }
+
+
+  next(); // Proceed to the route if no redirects happened
 });
 
 export default router;
