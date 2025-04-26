@@ -131,13 +131,6 @@ You are an advanced emotional analyst agent with expertise in psychological asse
 
 1. **Strategy or Intervention** — Description ([Reference])
 2. ...
-
----
-
-**References**
-
-*[List of cited scientific papers, with DOIs or database links as available.]*
-
 ---
 
 """
