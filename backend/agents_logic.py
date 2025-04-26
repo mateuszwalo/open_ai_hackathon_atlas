@@ -83,13 +83,21 @@ async def supervisor_step(state:SupervisorState):
         logger.error(f"Error in supervisor_step: {e}")
         raise
 
-async def emotional_step(state:EmotionalState):
-    result = await Runner.run(agent_emotional, state["messages"][-1].content)
+async def emotional_step(state: EmotionalState):
+    context = state.get("psychological_context", "")
+    user_input = state["messages"][-1].content
+
+    # Połączenie kontekstu z wiadomością użytkownika (jeśli Runner nie ma dedykowanego parametru na kontekst)
+    enriched_input = f"Kontekst psychologiczny:\n{context}\n\nWiadomość:\n{user_input}"
+
+    result = await Runner.run(agent_emotional, enriched_input)
 
     return {
-            "messages": AIMessage(result.final_output.message),
-            "thread_id": state.get("thread_id", "")
-        }
+        "messages": [AIMessage(result.final_output.message)],
+        "thread_id": state.get("thread_id", ""),
+        "psychological_context": context,  # zachowujemy kontekst, jeśli potrzebny dalej
+    }
+
 
 async def summary_step(state:SupervisorState):
     history_as_text = history_to_text(state["messages"])

@@ -3,6 +3,7 @@ from agents_logic import supervisor_step, emotional_step, summary_step
 # from langgraph.types import interrupt
 from langgraph.checkpoint.memory import MemorySaver
 from states import SupervisorState, EmotionalState
+from db import vectorstore
 
 def supervisor_edge(state: SupervisorState):
     if state["action"] == "ask_question":
@@ -16,6 +17,16 @@ def human_node(state: SupervisorState):
     # Pause the graph and wait for human input
     pass
 
+def rag_node(state: EmotionalState) -> EmotionalState:
+    last_msg = state["messages"][-1].content
+    context = retrieve_rag_context(last_msg)
+    state["psychological_context"] = context
+    return state
+
+
+def retrieve_rag_context(query: str, k: int=3) -> str:
+    docs = vectorstore.similarity_search(query, k=k)
+    return "\n---\n".join([d.page_content for d in docs])
 checkpointer = MemorySaver()
 
 def build_graph():
@@ -24,9 +35,15 @@ def build_graph():
     builder.add_node("emotional_agent", emotional_step)
     builder.add_node("human", human_node)
     builder.add_node("summary_agent", summary_step)
+    builder.add_node("rag", rag_node)
+
     builder.add_conditional_edges("supervisor", supervisor_edge, ["human","summary_agent"])
     builder.add_edge("human", "supervisor")
-    builder.add_edge("summary_agent", "emotional_agent")
+
+    # builder.add_edge("summary_agent", "emotional_agent")
+    builder.add_edge("summary_agent", "rag_node")
+    builder.add_edge("rag_node", "emotional_agent")
+
     builder.set_entry_point("supervisor")
     builder.set_finish_point("emotional_agent")
     return builder.compile(interrupt_before=["human"], checkpointer=checkpointer)
