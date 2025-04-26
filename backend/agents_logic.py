@@ -5,7 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from typing import Dict, Any
 from agents import Agent, Runner, FileSearchTool, trace
-from prompts import supervisor_prompt, emotional_prompt, summary_prompt
+from prompts import supervisor_prompt, emotional_prompt, summary_prompt, emotional_analyst_prompt
 from typing import Literal
 from states import SupervisorState, EmotionalState
 from pydantic import BaseModel
@@ -40,19 +40,19 @@ class SummaryOutput(BaseModel):
 
 agent_supervisor = Agent(
     name = "Supervisor",
-    model = "gpt-4o-mini",
+    model = "gpt-4.1-mini",
     instructions = supervisor_prompt,
     output_type = SupervisorAgentOutput
 )
 
 agent_emotional = Agent(
     name = "EmotionalAgent",
-    model = "gpt-4o-mini",
-    instructions = emotional_prompt,
+    model = "gpt-4.1",
+    instructions = emotional_analyst_prompt,
     output_type = EmotionalStateOutput,
     tools = [
         FileSearchTool(
-            max_num_results=3,
+            max_num_results=5,
             vector_store_ids=["vs_680c96022a7081919f0115cec214ea83"],
         )
     ]
@@ -60,29 +60,10 @@ agent_emotional = Agent(
 
 agent_summarty = Agent(
     name = "SummaryAgent",
-    model = "gpt-4o-mini",
+    model = "gpt-4.1-mini",
     instructions = summary_prompt,
     output_type = SummaryOutput
 )
-
-
-# client = OpenAI()
-
-# response = client.responses.create(
-#   model="gpt-4.1",
-#   input=[],
-#   tools=[
-#     {
-#       "type": "file_search",
-#       "vector_store_ids": [
-#         "vs_680c96022a7081919f0115cec214ea83"
-#       ]
-#     }
-#   ],
-#   temperature=1,
-#   top_p=1,
-#   store=True
-# )
 
 def history_to_text(messages: list[AnyMessage]) -> str:
     history_as_text = ""
@@ -115,28 +96,12 @@ async def supervisor_step(state:SupervisorState):
         logger.error(f"Error in supervisor_step: {e}")
         raise
 
-def retrieve_rag_context(query: str, k: int=3) -> str:
-    docs = vectorstore.similarity_search(query, k=k)
-    return "\n---\n".join([d.page_content for d in docs])
-
-async def rag_step(state: EmotionalState):
-    summary = state["summary"].content
-    print(f"RAG summary: {summary}")
-
-    docs = retrieve_rag_context(summary, k=3)
-    print(f"RAG docs: {docs}")
-
-    return {
-        "docs_context": docs,
-        "thread_id": state.get("thread_id", "")
-    }
-
-async def emotional_step(state: EmotionalState):
-    context = state.get("psychological_context", "")
-    user_input = state["messages"][-1].content
+async def emotional_step(state: SupervisorState):
+    context = state["summary"].content
+    # user_input = state["messages"][-1].content
 
     # Połączenie kontekstu z wiadomością użytkownika (jeśli Runner nie ma dedykowanego parametru na kontekst)
-    enriched_input = f"Kontekst psychologiczny:\n{context}\n\nWiadomość:\n{user_input}"
+    enriched_input = f"Summary of interview with user:\n{context}"
 
     with trace("OpenAI Hackathon"):
         result = await Runner.run(agent_emotional, enriched_input)
@@ -145,7 +110,7 @@ async def emotional_step(state: EmotionalState):
     return {
         "messages": [AIMessage(result.final_output.message)],
         "thread_id": state.get("thread_id", ""),
-        "psychological_context": context,  # zachowujemy kontekst, jeśli potrzebny dalej
+        # "psychological_context": context,  # zachowujemy kontekst, jeśli potrzebny dalej
     }
 
 

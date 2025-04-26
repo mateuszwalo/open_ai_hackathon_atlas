@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph
-from agents_logic import supervisor_step, emotional_step, summary_step, rag_step
+from agents_logic import supervisor_step, emotional_step, summary_step
 # from langgraph.types import interrupt
 from langgraph.checkpoint.memory import MemorySaver
 from states import SupervisorState, EmotionalState
@@ -25,14 +25,11 @@ def build_graph():
     builder.add_node("emotional_agent", emotional_step)
     builder.add_node("human", human_node)
     builder.add_node("summary_agent", summary_step)
-    # builder.add_node("rag", rag_step)
 
     builder.add_conditional_edges("supervisor", supervisor_edge, ["human","summary_agent"])
     builder.add_edge("human", "supervisor")
 
-    # builder.add_edge("summary_agent", "emotional_agent")
     builder.add_edge("summary_agent", "emotional_agent")
-    # builder.add_edge("rag", "emotional_agent")
 
     builder.set_entry_point("supervisor")
     builder.set_finish_point("emotional_agent")
