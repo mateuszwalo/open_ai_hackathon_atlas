@@ -1,27 +1,43 @@
 // filepath: c:\Users\maksk\Desktop\TheHack\open_ai_hackathon_atlas\frontend\src\views\ChatView.vue
 <script setup lang="ts">
 import { ref } from 'vue';
-// Import the new component
-import ChatInput from '@/components/chat/ChatInput.vue'; // Using '@/' alias for src/
+import ChatInput from '@/components/chat/ChatInput.vue';
+// Import the new MessageList component
+import MessageList from '@/components/chat/MessageList.vue';
 
-// Placeholder for future state management connection
-const messages = ref<any[]>([]); // Specify type for messages array
-const isLoading = ref(false); // Will track if AI is responding
-// No longer need newMessage here, ChatInput manages its own state
-// const newMessage = ref('');
+// Define the message structure (can be moved to a shared types file later)
+interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'ai';
+  timestamp: Date;
+  threadId?: string;
+}
 
-// Renamed function parameter to avoid conflict with outer scope variable if needed
+// Use the interface for the messages ref
+const messages = ref<ChatMessage[]>([]);
+const isLoading = ref(false);
+
 function handleSendMessage(messageText: string) {
-  // Logic to send message will go here
   console.log('Received message from ChatInput:', messageText);
 
-  // Placeholder: Add user message to list (we'll replace this with Pinia later)
-  messages.value.push({ id: Date.now().toString(), text: messageText, sender: 'user', timestamp: new Date() });
+  // Add user message using the ChatMessage interface
+  messages.value.push({
+    id: Date.now().toString() + '-user', // Add sender type to ID for potential key issues
+    text: messageText,
+    sender: 'user',
+    timestamp: new Date()
+  });
 
-  // Placeholder: Simulate AI response (we'll replace this with API call later)
   isLoading.value = true;
+  // Placeholder: Simulate AI response
   setTimeout(() => {
-    messages.value.push({ id: Date.now().toString(), text: 'AI response placeholder...', sender: 'ai', timestamp: new Date() });
+    messages.value.push({
+      id: Date.now().toString() + '-ai', // Add sender type to ID
+      text: 'AI response placeholder... This is a slightly longer response to test wrapping and layout.',
+      sender: 'ai',
+      timestamp: new Date()
+    });
     isLoading.value = false;
   }, 1500);
 }
@@ -31,7 +47,9 @@ function handleSendMessage(messageText: string) {
   <div class="chat-view">
     <h1>Mental Health Chatbot</h1>
     <div class="chat-container">
-      <!-- MessageList component will go here -->
+      <!-- Replace the placeholder div with the MessageList component -->
+      <MessageList :messages="messages" :is-loading="isLoading" />
+      <!--
       <div class="message-list-placeholder">
         <p v-if="messages.length === 0">No messages yet. Start the conversation!</p>
         <div v-for="message in messages" :key="message.id" class="message-item">
@@ -39,23 +57,9 @@ function handleSendMessage(messageText: string) {
         </div>
         <p v-if="isLoading">AI is thinking...</p>
       </div>
-
-      <!-- Replace the placeholder div with the ChatInput component -->
-      <ChatInput :disabled="isLoading" @send-message="handleSendMessage" />
-      <!--
-      <div class="chat-input-placeholder">
-        <input
-          type="text"
-          v-model="newMessage"
-          placeholder="Type your message..."
-          @keyup.enter="sendMessage"
-          :disabled="isLoading"
-        />
-        <button @click="sendMessage" :disabled="isLoading || !newMessage.trim()">
-          Send
-        </button>
-      </div>
       -->
+
+      <ChatInput :disabled="isLoading" @send-message="handleSendMessage" />
     </div>
   </div>
 </template>
@@ -88,42 +92,10 @@ h1 {
   overflow: hidden; /* Keep content within rounded corners */
 }
 
-.message-list-placeholder {
-  flex-grow: 1;
-  padding: 1rem;
-  overflow-y: auto; /* Allow scrolling for messages */
-  /* Removed border-bottom, ChatInput now provides the top border */
-}
-
-.message-item {
-  margin-bottom: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  max-width: 80%;
-}
-
-.message-item strong {
-  font-weight: 600; /* Slightly bolder sender name */
-}
-
-/* Basic differentiation for user/ai messages (will be refined in ChatMessage.vue) */
-.message-item:has(strong:contains('You')) {
-  background-color: #e8f5e9; /* Lighter green for user */
-  margin-left: auto; /* Align user messages to the right */
-  text-align: right;
-}
-
-.message-item:has(strong:contains('AI')) {
-  background-color: #f1f8e9; /* Lighter ivory/green for AI */
-  margin-right: auto; /* Align AI messages to the left */
-  text-align: left;
-}
-
-/* Styles for the placeholder input are no longer needed here */
-/* .chat-input-placeholder { ... } */
-/* .chat-input-placeholder input { ... } */
-/* .chat-input-placeholder input:disabled { ... } */
-/* .chat-input-placeholder button { ... } */
-/* .chat-input-placeholder button:hover { ... } */
-/* .chat-input-placeholder button:disabled { ... } */
+/* Styles for the placeholder list and items are no longer needed here */
+/* .message-list-placeholder { ... } */
+/* .message-item { ... } */
+/* .message-item strong { ... } */
+/* .message-item:has(strong:contains('You')) { ... } */
+/* .message-item:has(strong:contains('AI')) { ... } */
 </style>
