@@ -90,7 +90,8 @@ async def supervisor_step(state:SupervisorState):
         return {
             "messages": AIMessage(result.final_output.message),
             "thread_id": state.get("thread_id", ""),
-            "action": result.final_output.action
+            "action": result.final_output.action,
+            "agent": "supervisor_agent",
         }
     except Exception as e:
         logger.error(f"Error in supervisor_step: {e}")
@@ -110,6 +111,7 @@ async def emotional_step(state: SupervisorState):
     return {
         "messages": [AIMessage(result.final_output.message)],
         "thread_id": state.get("thread_id", ""),
+        "agent": "emotional_agent",
         # "psychological_context": context,  # zachowujemy kontekst, jeśli potrzebny dalej
     }
 
@@ -122,5 +124,7 @@ async def summary_step(state:SupervisorState):
 
     return {
             "summary": AIMessage(result.final_output.summary),
-            "thread_id": state.get("thread_id", "")
+            "thread_id": state.get("thread_id", ""),
+            "agent": "summary_agent"
+        
         }

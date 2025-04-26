@@ -8,6 +8,7 @@ class SupervisorState(TypedDict):
     summary: str
     thread_id: str
     action: str
+    agent: str
     messages: Annotated[list[AnyMessage], add_messages]
 
 class EmotionalState(TypedDict):

@@ -23,10 +23,6 @@ class AgentInput(BaseModel):
     message: str
     thread_id: Optional[str] = ""
 
-class HumanInput(BaseModel):
-    thread_id: str
-    input_message: str
-
 @app.post("/agent")
 async def run_openai_agent(input_data: AgentInput):
     print(f"🔍 Odebrano dane: {input_data.model_dump()}")
@@ -49,7 +45,8 @@ async def run_openai_agent(input_data: AgentInput):
 
         return {
             "response": result["messages"][-1].content,
-            "thread_id": result.get("thread_id", "")
+            "thread_id": result.get("thread_id", ""),
+            "agent": result.get("agent", "")  # Dodajemy agent do odpowiedzi
         }
     except Exception as e:
         print(f"💥 Błąd podczas przetwarzania: {str(e)}")
