@@ -59,7 +59,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO QUESTIONS (user_id)
     VALUES (
-        NEW.id)
+        NEW.id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
