@@ -1,65 +1,49 @@
 // filepath: c:\Users\maksk\Desktop\TheHack\open_ai_hackathon_atlas\frontend\src\views\ChatView.vue
 <script setup lang="ts">
-import { ref } from 'vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
-// Import the new MessageList component
 import MessageList from '@/components/chat/MessageList.vue';
+import { useChatStore } from '@/stores/chatStore'; // Import the chat store
+import { useAuthStore } from '@/stores/authStore'; // Import auth store for logout
 
-// Define the message structure (can be moved to a shared types file later)
-interface ChatMessage {
-  id: string;
-  text: string;
-  sender: 'user' | 'ai';
-  timestamp: Date;
-  threadId?: string;
+// Get instances of the stores
+const chatStore = useChatStore();
+const authStore = useAuthStore(); // Get auth store instance
+
+// The handleSendMessage function now just calls the store action
+function handleSendMessage(messageText: string) {
+  console.log('Sending message via store:', messageText);
+  chatStore.sendMessage(messageText); // Call the action in the chat store
 }
 
-// Use the interface for the messages ref
-const messages = ref<ChatMessage[]>([]);
-const isLoading = ref(false);
+// Function to handle logout
+function handleLogout() {
+  authStore.logout(); // Call the logout action from the auth store
+  // The auth store's logout action should ideally call chatStore.clearChat()
+}
 
-function handleSendMessage(messageText: string) {
-  console.log('Received message from ChatInput:', messageText);
-
-  // Add user message using the ChatMessage interface
-  messages.value.push({
-    id: Date.now().toString() + '-user', // Add sender type to ID for potential key issues
-    text: messageText,
-    sender: 'user',
-    timestamp: new Date()
-  });
-
-  isLoading.value = true;
-  // Placeholder: Simulate AI response
-  setTimeout(() => {
-    messages.value.push({
-      id: Date.now().toString() + '-ai', // Add sender type to ID
-      text: 'AI response placeholder... This is a slightly longer response to test wrapping and layout.',
-      sender: 'ai',
-      timestamp: new Date()
-    });
-    isLoading.value = false;
-  }, 1500);
+function handleNewConversation() {
+  chatStore.startNewConversation();
 }
 </script>
 
 <template>
   <div class="chat-view">
-    <h1>Mental Health Chatbot</h1>
-    <div class="chat-container">
-      <!-- Replace the placeholder div with the MessageList component -->
-      <MessageList :messages="messages" :is-loading="isLoading" />
-      <!--
-      <div class="message-list-placeholder">
-        <p v-if="messages.length === 0">No messages yet. Start the conversation!</p>
-        <div v-for="message in messages" :key="message.id" class="message-item">
-          <strong>{{ message.sender === 'user' ? 'You' : 'AI' }}:</strong> {{ message.text }}
-        </div>
-        <p v-if="isLoading">AI is thinking...</p>
+    <header class="chat-header">
+      <h1>Mental Health Chatbot</h1>
+      <div>
+        <button @click="handleNewConversation" class="new-convo-button">New Conversation</button>
+        <button @click="handleLogout" class="logout-button">Logout</button>
       </div>
-      -->
-
-      <ChatInput :disabled="isLoading" @send-message="handleSendMessage" />
+    </header>
+    <div class="chat-container">
+      <!-- Pass messages and isLoading directly from the store -->
+      <MessageList :messages="chatStore.messages" :is-loading="chatStore.isLoading" />
+      <!-- Display chat error if it exists -->
+      <div v-if="chatStore.chatError" class="chat-error-message">
+        {{ chatStore.chatError }}
+      </div>
+      <!-- Pass isLoading from the store to disable the input -->
+      <ChatInput :disabled="chatStore.isLoading" @send-message="handleSendMessage" />
     </div>
   </div>
 </template>
@@ -74,12 +58,58 @@ function handleSendMessage(messageText: string) {
   font-family: 'Switzer', sans-serif; /* Use Switzer font */
 }
 
+/* Style the header */
+.chat-header {
+  display: flex;
+  justify-content: space-between; /* Space out title and button */
+  align-items: center; /* Vertically align items */
+  margin-bottom: 1rem;
+}
+
 h1 {
   font-family: 'Nohemi', sans-serif; /* Use Nohemi font for heading */
   font-weight: 600;
   color: #3c8a38; /* Primary green */
   text-align: center;
-  margin-bottom: 1rem;
+  margin: 0; /* Remove default margin */
+  flex-grow: 1; /* Allow title to take space */
+  padding-left: 60px; /* Add padding to center title roughly, adjust as needed */
+}
+
+.logout-button {
+  padding: 0.4rem 0.8rem;
+  background-color: #e57373; /* A reddish color for logout */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Nohemi', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+  white-space: nowrap; /* Prevent button text wrapping */
+}
+
+.logout-button:hover {
+  background-color: #d32f2f; /* Darker red on hover */
+}
+
+.new-convo-button {
+  margin-right: 0.5rem;
+  background-color: #a2e59f;
+  color: #212121;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-family: 'Nohemi', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.new-convo-button:hover {
+  background-color: #3c8a38;
+  color: #fff;
 }
 
 .chat-container {
@@ -92,10 +122,14 @@ h1 {
   overflow: hidden; /* Keep content within rounded corners */
 }
 
-/* Styles for the placeholder list and items are no longer needed here */
-/* .message-list-placeholder { ... } */
-/* .message-item { ... } */
-/* .message-item strong { ... } */
-/* .message-item:has(strong:contains('You')) { ... } */
-/* .message-item:has(strong:contains('AI')) { ... } */
+/* Style for chat error messages */
+.chat-error-message {
+  color: #d32f2f; /* Red color for errors */
+  background-color: #ffebee; /* Light red background */
+  border-top: 1px solid #ef9a9a; /* Lighter red border */
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-family: 'Switzer', sans-serif;
+}
 </style>

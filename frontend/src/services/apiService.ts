@@ -50,3 +50,40 @@ export const sendMessageToAgent = async (message: string, threadId: string | nul
     throw error;
   }
 };
+
+/**
+ * MOCK FUNCTION: Simulates logging in a user.
+ * In a real app, this would send credentials to the backend /login endpoint.
+ * @param credentials User's login details (e.g., { username: 'test', password: 'password' })
+ * @returns A Promise that resolves with a mock user ID.
+ */
+export const loginUser = async (credentials: any): Promise<{ userId: number }> => {
+  console.log('Mock API: Logging in with', credentials);
+  // Simulate a network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  // Simulate successful login - return a mock user ID
+  // In a real app, you'd check credentials and get a real ID or token from the backend
+  if (credentials.username && credentials.password) {
+    return { userId: 123 }; // Example user ID
+  } else {
+    throw new Error('Mock API: Invalid credentials');
+  }
+};
+
+/**
+ * MOCK FUNCTION: Simulates registering a new user.
+ * In a real app, this would send details to the backend /register endpoint.
+ * @param details User's registration details (e.g., { username: 'new', password: 'password' })
+ * @returns A Promise that resolves with a mock user ID.
+ */
+export const registerUser = async (details: any): Promise<{ userId: number }> => {
+  console.log('Mock API: Registering with', details);
+  // Simulate a network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  // Simulate successful registration
+  if (details.username && details.password) {
+    return { userId: 456 }; // Example new user ID
+  } else {
+    throw new Error('Mock API: Invalid registration details');
+  }
+};
