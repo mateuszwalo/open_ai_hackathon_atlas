@@ -14,16 +14,9 @@ def supervisor_edge(state: SupervisorState):
     
 def human_node(state: SupervisorState):
     # Pause the graph and wait for human input
-    print("⏸️ Graph paused, waiting for human input...")
-    # Save the state to a persistent store (e.g., database or in-memory store)
-    # value = interrupt(state)
-    value = "Now i think i'm fine"
-    # For simplicity, we'll just return the state here
-    return {
-        "messages": value
-    }
+    pass
 
-# checkpointer = MemorySaver()
+checkpointer = MemorySaver()
 
 def build_graph():
     builder = StateGraph(SupervisorState)  # Używamy prostego dict zamiast AgentState
@@ -34,6 +27,6 @@ def build_graph():
     builder.add_edge("human", "supervisor")
     builder.set_entry_point("supervisor")
     builder.set_finish_point("emotional_agent")
-    return builder.compile()
+    return builder.compile(interrupt_before=["human"], checkpointer=checkpointer)
 
 graph = build_graph()
