@@ -121,14 +121,7 @@ This document outlines the step-by-step process for developing the Vue.js fronte
     *   Connect `ChatInput.vue` to trigger the `sendMessage` action in the store.
     *   Display a loading indicator based on the `isLoading` state.
 5.  **Styling:**
-    *   Choose and set up a styling approach (e.g., basic CSS, Tailwind CSS). If using Tailwind:
-        ```bash
-        npm install -D tailwindcss postcss autoprefixer
-        npx tailwindcss init -p
-        ```
-        *   Configure `tailwind.config.js` and `frontend/src/index.css`.
-    *   Apply basic styles to make the chat interface usable.
-
+    *   Choose and set up a styling approach - we are going with basic CSS
 ---
 
 ## Phase 3: Refinement & Features

@@ -1,35 +1,46 @@
+/* Import base styles (like CSS reset) */
 @import './base.css';
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+/* Define Nohemi Font */
+@font-face {
+  font-family: 'Nohemi';
+  /* Adjust path if needed */
+  src: url('./fonts/Nohemi-SemiBold.ttf') format('truetype');
+  font-weight: 600; /* 600 corresponds to SemiBold */
+  font-style: normal;
+  font-display: swap; /* Use system font while loading */
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+/* Define Switzer Font */
+@font-face {
+  font-family: 'Switzer';
+  /* Adjust path if needed */
+  /* Use this if Switzer-Variable.ttf contains the Light weight */
+  src: url('./fonts/Switzer-Variable.ttf') format('truetype-variations');
+  /* If you have a specific Switzer-Light.ttf, use this instead: */
+  /* src: url('./fonts/Switzer-Light.ttf') format('truetype'); */
+
+  /* Define the range for variable font, or specific weight */
+  font-weight: 100 900; /* For variable font */
+  /* font-weight: 300; */ /* For specific Light font (use if not variable) */
+  font-style: normal;
+  font-display: swap; /* Use system font while loading */
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+/* Basic body styling - Apply Switzer Light as the default */
+body {
+  font-family: 'Switzer', sans-serif; /* Use Switzer as default, fallback to sans-serif */
+  font-weight: 300; /* Default to Light weight */
+  /* Add other base body styles if needed, e.g., background color */
+  margin: 0; /* Remove default browser margin */
+  padding: 0; /* Remove default browser padding */
+  box-sizing: border-box; /* Makes sizing more intuitive */
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+/* Ensure all elements inherit box-sizing */
+*, *::before, *::after {
+  box-sizing: inherit;
 }
+
+/* We removed the default #app, a, .green, and media query styles */
+/* Specific component styles will be added in their respective .vue files */
