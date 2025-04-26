@@ -1,29 +1,54 @@
-// filepath: c:\Users\maksk\Desktop\TheHack\open_ai_hackathon_atlas\frontend\src\views\ChatView.vue
 <script setup lang="ts">
 import ChatInput from '@/components/chat/ChatInput.vue';
 import MessageList from '@/components/chat/MessageList.vue';
-import { useChatStore } from '@/stores/chatStore'; // Import the chat store
-import { useAuthStore } from '@/stores/authStore'; // Import auth store for logout
+import { useChatStore } from '@/stores/chatStore';
+import { useAuthStore } from '@/stores/authStore';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
 // Get instances of the stores
 const chatStore = useChatStore();
-const authStore = useAuthStore(); // Get auth store instance
+const authStore = useAuthStore();
+
+// Add state for personality data
+const personalityData = ref(null);
+const isLoadingPersonality = ref(false);
+
+// Function to fetch personality data
+const fetchPersonalityData = async () => {
+  if (!authStore.userId) return;
+  
+  isLoadingPersonality.value = true;
+  try {
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL}/user-personality/${authStore.userId}`
+    );
+    personalityData.value = response.data;
+  } catch (error) {
+    console.error('Failed to fetch personality data:', error);
+  } finally {
+    isLoadingPersonality.value = false;
+  }
+};
 
 // The handleSendMessage function now just calls the store action
 function handleSendMessage(messageText: string) {
   console.log('Sending message via store:', messageText);
-  chatStore.sendMessage(messageText); // Call the action in the chat store
+  chatStore.sendMessage(messageText);
 }
 
 // Function to handle logout
 function handleLogout() {
-  authStore.logout(); // Call the logout action from the auth store
-  // The auth store's logout action should ideally call chatStore.clearChat()
+  authStore.logout();
 }
 
 function handleNewConversation() {
   chatStore.startNewConversation();
 }
+
+onMounted(() => {
+  fetchPersonalityData();
+});
 </script>
 
 <template>
@@ -35,6 +60,49 @@ function handleNewConversation() {
         <button @click="handleLogout" class="logout-button">Logout</button>
       </div>
     </header>
+    
+    <!-- Display personality insights if available -->
+    <div v-if="personalityData" class="personality-card">
+      <h3>Your Personality Profile</h3>
+      <div class="trait-bars">
+        <div class="trait-bar-container">
+          <span class="trait-label">Extraversion</span>
+          <div class="trait-bar-bg">
+            <div class="trait-bar" :style="{ width: `${personalityData.extraversion * 100}%` }"></div>
+          </div>
+          <span class="trait-value">{{ (personalityData.extraversion * 100).toFixed(0) }}%</span>
+        </div>
+        <div class="trait-bar-container">
+          <span class="trait-label">Agreeableness</span>
+          <div class="trait-bar-bg">
+            <div class="trait-bar" :style="{ width: `${personalityData.agreeableness * 100}%` }"></div>
+          </div>
+          <span class="trait-value">{{ (personalityData.agreeableness * 100).toFixed(0) }}%</span>
+        </div>
+        <div class="trait-bar-container">
+          <span class="trait-label">Conscientiousness</span>
+          <div class="trait-bar-bg">
+            <div class="trait-bar" :style="{ width: `${personalityData.conscientiousness * 100}%` }"></div>
+          </div>
+          <span class="trait-value">{{ (personalityData.conscientiousness * 100).toFixed(0) }}%</span>
+        </div>
+        <div class="trait-bar-container">
+          <span class="trait-label">Neuroticism</span>
+          <div class="trait-bar-bg">
+            <div class="trait-bar" :style="{ width: `${personalityData.neuroticism * 100}%` }"></div>
+          </div>
+          <span class="trait-value">{{ (personalityData.neuroticism * 100).toFixed(0) }}%</span>
+        </div>
+        <div class="trait-bar-container">
+          <span class="trait-label">Openness</span>
+          <div class="trait-bar-bg">
+            <div class="trait-bar" :style="{ width: `${personalityData.openness * 100}%` }"></div>
+          </div>
+          <span class="trait-value">{{ (personalityData.openness * 100).toFixed(0) }}%</span>
+        </div>
+      </div>
+    </div>
+    
     <div class="chat-container">
       <!-- Pass messages and isLoading directly from the store -->
       <MessageList :messages="chatStore.messages" :is-loading="chatStore.isLoading" />
@@ -49,16 +117,69 @@ function handleNewConversation() {
 </template>
 
 <style scoped>
+/* Add these new styles */
+.personality-card {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f1f8e9;
+  border-radius: 8px;
+  border: 1px solid #a2e59f;
+}
+
+.personality-card h3 {
+  color: #3c8a38;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-family: 'Nohemi', sans-serif;
+}
+
+.trait-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.trait-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trait-label {
+  width: 130px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.trait-bar-bg {
+  flex-grow: 1;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.trait-bar {
+  height: 100%;
+  background-color: #3c8a38;
+}
+
+.trait-value {
+  width: 40px;
+  font-size: 0.9rem;
+}
+
+/* Keep existing styles */
 .chat-view {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 2rem); /* Full height minus App.vue padding */
-  max-width: 800px; /* Limit width for better readability */
-  margin: 0 auto; /* Center the chat view */
-  font-family: 'Switzer', sans-serif; /* Use Switzer font */
+  height: calc(100vh - 2rem);
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: 'Switzer', sans-serif;
 }
 
-/* Style the header */
+/* Rest of your existing styles... */
 .chat-header {
   display: flex;
   justify-content: space-between; /* Space out title and button */
