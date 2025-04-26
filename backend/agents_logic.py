@@ -10,6 +10,7 @@ from states import SupervisorState, EmotionalState
 from pydantic import BaseModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.messages import AnyMessage
+from db import vectorstore
 
 # Konfiguracja logowania
 logging.basicConfig(
@@ -63,7 +64,6 @@ def history_to_text(messages: list[AnyMessage]) -> str:
 
 async def supervisor_step(state:SupervisorState):
     try:
-        print(f"State: {state}")
         if not state["messages"]:
             raise ValueError("State messages are empty or invalid.")
         

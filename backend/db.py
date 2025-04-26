@@ -12,4 +12,4 @@ def load_faiss_index(index_path: str, embedding_model: str = "text-embedding-3-s
     )
 
 # Przykład użycia:
-vectorstore = load_faiss_index("/backend/vector")
+vectorstore = load_faiss_index("vector")
