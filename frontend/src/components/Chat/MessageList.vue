@@ -1,6 +1,8 @@
 // filepath: c:\Users\maksk\Desktop\TheHack\open_ai_hackathon_atlas\frontend\src\components\chat\MessageList.vue
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue';
+import welcomeImage from '@/assets/images/welcome.webp'; // Import the image
+import ChatMessageComponent from './ChatMessage.vue'; // Import the ChatMessage component
 
 // Define the structure of a single message object
 // This should match the structure used in ChatView and eventually Pinia
@@ -47,10 +49,24 @@ watch(messageContainer, (newVal) => {
 
 <template>
   <div class="message-list" ref="messageContainer">
-    <p v-if="messages.length === 0" class="empty-message">
-      No messages yet. Start the conversation!
-    </p>
-    <!-- We will replace this div with the ChatMessage component in the next step -->
+    <!-- Container for empty chat content -->
+    <div v-if="messages.length === 0" class="empty-chat-content">
+      <div class="welcome-image-container">
+        <img :src="welcomeImage" alt="Welcome illustration" class="welcome-image" />
+      </div>
+      <p class="empty-message">
+        Hi Max, how can I help you?
+      </p>
+    </div>
+
+    <!-- Use the actual ChatMessage component here -->
+    <ChatMessageComponent
+      v-for="message in messages"
+      :key="message.id"
+      :message="message"
+    />
+    <!-- The old placeholder div below should be removed -->
+    <!--
     <div
       v-for="message in messages"
       :key="message.id"
@@ -60,11 +76,12 @@ watch(messageContainer, (newVal) => {
       <div class="message-content">
         {{ message.text }}
       </div>
-      <!-- Basic timestamp - can be formatted better later -->
       <span class="timestamp">{{ message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</span>
     </div>
+    -->
+
     <p v-if="isLoading" class="loading-indicator">
-      AI is thinking...
+      AI is thinking
     </p>
   </div>
 </template>
@@ -79,62 +96,69 @@ watch(messageContainer, (newVal) => {
   gap: 0.75rem; /* Space between messages */
 }
 
-.empty-message {
+/* New container for empty state */
+.empty-chat-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: #888;
   margin-top: auto;
-  margin-bottom: auto; /* Center vertically if no messages */
+  margin-bottom: auto; /* Center vertically */
 }
 
-/* Placeholder styles - will be mostly replaced by ChatMessage.vue styles */
-.message-item-placeholder {
-  padding: 0.6rem 0.9rem;
-  border-radius: 8px;
-  max-width: 80%;
-  word-wrap: break-word; /* Ensure long words break */
-  display: flex;
-  flex-direction: column; /* Stack content and timestamp */
+/* Container to clip the image */
+.welcome-image-container {
+  width: 30%;
+  max-width: 200px; /* Adjust max-width as needed */
+  height: 240px; /* Adjust height to control how much of the top is shown */
+  overflow: hidden; /* Clip the image */
+  margin-bottom: 1rem; /* Space between image and text */
+  border-radius: 70px; /* Optional: round corners */
 }
 
-.message-content {
-  font-family: 'Switzer', sans-serif;
-  font-weight: 300;
-  line-height: 1.5;
+.welcome-image {
+  display: block;
+  width: 100%;
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Cover the container */
+  object-position: top center; /* Show the top part */
 }
 
-.timestamp {
-  font-size: 0.7rem;
-  color: #666;
-  margin-top: 0.25rem;
-  align-self: flex-end; /* Align timestamp to the bottom right */
+.empty-message {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
-.user-message {
-  background-color: #e8f5e9; /* Lighter green for user */
-  color: #212121;
-  margin-left: auto; /* Align user messages to the right */
-  align-items: flex-end; /* Align content to the right */
-}
-.user-message .timestamp {
-  align-self: flex-end;
-}
-
-.ai-message {
-  background-color: #f1f8e9; /* Lighter ivory/green for AI */
-  color: #212121;
-  margin-right: auto; /* Align AI messages to the left */
-  align-items: flex-start; /* Align content to the left */
-}
-.ai-message .timestamp {
-  align-self: flex-end; /* Still align timestamp to right within the bubble */
-}
-/* --- End Placeholder Styles --- */
+/* --- Remove Placeholder Styles --- */
+/* Remove .message-item-placeholder, .message-content, .timestamp, .user-message, .ai-message rules */
+/* These styles are now handled within ChatMessage.vue */
+/* --- End Remove Placeholder Styles --- */
 
 
+/* Keep loading indicator styles */
 .loading-indicator {
   text-align: center;
   color: #555;
   font-style: italic;
   padding: 0.5rem;
 }
+.loading-indicator::after {
+  content: '.';
+  animation: thinking-ellipsis-dots 1.5s infinite steps(1, end);
+  display: inline-block;
+  vertical-align: bottom;
+  overflow: hidden;
+  width: 1.2em;
+  text-align: left;
+}
+
+@keyframes thinking-ellipsis-dots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+  100% { content: '.'; }
+}
+
 </style>

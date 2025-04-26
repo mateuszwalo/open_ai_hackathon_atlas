@@ -1,6 +1,7 @@
 // filepath: c:\Users\maksk\Desktop\TheHack\open_ai_hackathon_atlas\frontend\src\components\chat\ChatMessage.vue
 <script setup lang="ts">
 import { computed } from 'vue';
+import { marked } from 'marked'; // Import marked
 
 // Define the structure of the message prop
 interface ChatMessageData {
@@ -30,13 +31,21 @@ const formattedTimestamp = computed(() => {
     minute: '2-digit',
   });
 });
+
+// New: Render markdown text to HTML
+const renderedMarkdown = computed(() => {
+  // Use marked.parse() to convert markdown string to HTML
+  // Note: Be cautious with v-html if the source isn't fully trusted.
+  // For AI responses you control, it's generally okay, but sanitize if needed.
+  return marked.parse(props.message.text);
+});
+
 </script>
 
 <template>
   <div :class="messageClasses">
-    <div class="message-content">
-      {{ message.text }}
-    </div>
+    <!-- Use v-html to render the parsed markdown -->
+    <div class="message-content" v-html="renderedMarkdown"></div>
     <span class="timestamp">{{ formattedTimestamp }}</span>
   </div>
 </template>
@@ -58,6 +67,56 @@ const formattedTimestamp = computed(() => {
   font-weight: 300; /* Light weight */
   line-height: 1.5; /* Improve readability */
   white-space: pre-wrap; /* Preserve line breaks from the text */
+}
+
+/* Add basic styling for common markdown elements within message-content */
+.message-content :deep(p) {
+  margin-bottom: 0.5em; /* Add space between paragraphs */
+}
+.message-content :deep(p):last-child {
+  margin-bottom: -1.75rem; /* No space after the last paragraph */
+}
+.message-content :deep(ul),
+.message-content :deep(ol) {
+  padding-left: 1.5em; /* Indent lists */
+  margin-bottom: 0.5em;
+}
+.message-content :deep(li) {
+  margin-bottom: 0.25em; /* Space between list items */
+}
+.message-content :deep(code) {
+  background-color: rgba(0, 0, 0, 0.05); /* Subtle background for inline code */
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: monospace;
+}
+.message-content :deep(pre) {
+  background-color: rgba(0, 0, 0, 0.07); /* Slightly darker for code blocks */
+  padding: 0.75em;
+  border-radius: 4px;
+  overflow-x: auto; /* Allow horizontal scrolling for long code lines */
+  margin-bottom: 0.5em;
+}
+.message-content :deep(pre code) {
+  background-color: transparent; /* Remove double background */
+  padding: 0;
+  font-size: 0.85em;
+}
+.message-content :deep(blockquote) {
+  border-left: 3px solid #a2e59f; /* Use accent color for blockquote border */
+  padding-left: 1em;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0.5em;
+  color: #555; /* Slightly muted text */
+  font-style: italic;
+}
+.message-content :deep(strong) {
+  font-weight: 600; /* Make bold text stand out more */
+}
+.message-content :deep(em) {
+  font-style: italic;
 }
 
 .timestamp {

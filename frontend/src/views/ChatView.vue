@@ -53,13 +53,12 @@ onMounted(() => {
 
 <template>
   <div class="chat-view">
-    <header class="chat-header">
-      <h1>Mental Health Chatbot</h1>
-      <div>
-        <button @click="handleNewConversation" class="new-convo-button">New Conversation</button>
-        <button @click="handleLogout" class="logout-button">Logout</button>
-      </div>
-    </header>
+    <div class="chat-header">
+      <h1>Sentio Platform</h1>
+      <!-- Remove the New Conversation and Logout buttons -->
+      <!-- <button @click="handleNewConversation" class="new-convo-button">New Convo</button> -->
+      <!-- <button @click="handleLogout" class="logout-button">Logout</button> -->
+    </div>
     
     <!-- Display personality insights if available -->
     <div v-if="personalityData" class="personality-card">
@@ -173,18 +172,20 @@ onMounted(() => {
 .chat-view {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 2rem);
-  max-width: 800px;
-  margin: 0 auto;
+  /* Remove fixed height/max-width/margin to fill the container */
+  height: 100%; /* Fill the height of .main-content */
+  /* max-width: 800px; */ /* Remove or adjust if needed */
+  /* margin: 0 auto; */ /* Remove or adjust if needed */
   font-family: 'Switzer', sans-serif;
 }
 
-/* Rest of your existing styles... */
 .chat-header {
   display: flex;
   justify-content: space-between; /* Space out title and button */
   align-items: center; /* Vertically align items */
   margin-bottom: 1rem;
+  /* Adjust padding if the title looks off-center now */
+  /* padding-left: 0; */
 }
 
 h1 {
@@ -194,27 +195,15 @@ h1 {
   text-align: center;
   margin: 0; /* Remove default margin */
   flex-grow: 1; /* Allow title to take space */
-  padding-left: 60px; /* Add padding to center title roughly, adjust as needed */
+  /* Adjust padding if needed */
+   padding-left: 0; /* Remove previous padding */
 }
 
-.logout-button {
-  padding: 0.4rem 0.8rem;
-  background-color: #e57373; /* A reddish color for logout */
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Nohemi', sans-serif;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: background-color 0.2s ease;
-  white-space: nowrap; /* Prevent button text wrapping */
-}
+/* Remove the logout button style from here if it's now in the sidebar */
+/* .logout-button { ... } */
+/* .logout-button:hover { ... } */
 
-.logout-button:hover {
-  background-color: #d32f2f; /* Darker red on hover */
-}
-
+/* Keep new-convo-button style if you want it in both places, or remove if only in sidebar */
 .new-convo-button {
   margin-right: 0.5rem;
   background-color: #a2e59f;
@@ -241,6 +230,8 @@ h1 {
   border-radius: 8px; /* Rounded corners */
   background-color: #ffffff; /* White background for chat area */
   overflow: hidden; /* Keep content within rounded corners */
+  /* Add min-height to prevent collapse when empty */
+  min-height: 300px;
 }
 
 /* Style for chat error messages */
