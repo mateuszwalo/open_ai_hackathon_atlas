@@ -4,11 +4,12 @@ import logging
 from dotenv import load_dotenv
 from typing import Dict, Any
 from agents import Agent, Runner
-from prompts import supervisor_prompt, emotional_prompt
+from prompts import supervisor_prompt, emotional_prompt, summary_prompt
 from typing import Literal
 from states import SupervisorState, EmotionalState
 from pydantic import BaseModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AnyMessage
 
 # Konfiguracja logowania
 logging.basicConfig(
@@ -27,6 +28,9 @@ class SupervisorAgentOutput(BaseModel):
 class EmotionalStateOutput(BaseModel):
     message: str
 
+class SummaryOutput(BaseModel):
+    summary: str
+
 agent_supervisor = Agent(
     name = "Supervisor",
     model = "gpt-4o-mini",
@@ -41,6 +45,21 @@ agent_emotional = Agent(
     output_type = EmotionalStateOutput
 )
 
+agent_summarty = Agent(
+    name = "SummaryAgent",
+    model = "gpt-4o-mini",
+    instructions = summary_prompt,
+    output_type = SummaryOutput
+)
+
+def history_to_text(messages: list[AnyMessage]) -> str:
+    history_as_text = ""
+    for msg in messages:
+        if isinstance(msg, HumanMessage):
+            history_as_text += f"Human: {msg.content}\n"
+        elif isinstance(msg, AIMessage):
+            history_as_text += f"AI: {msg.content}\n"
+    return history_as_text.strip()
 
 async def supervisor_step(state:SupervisorState):
     try:
@@ -48,12 +67,7 @@ async def supervisor_step(state:SupervisorState):
         if not state["messages"]:
             raise ValueError("State messages are empty or invalid.")
         
-        history_as_text = ""
-        for msg in state["messages"]:
-            if isinstance(msg, HumanMessage):
-                history_as_text += f"Human: {msg.content}\n"
-            elif isinstance(msg, AIMessage):
-                history_as_text += f"AI: {msg.content}\n"
+        history_as_text = history_to_text(state["messages"])
 
         result = await Runner.run(agent_supervisor, history_as_text)
         if not result:
@@ -69,10 +83,20 @@ async def supervisor_step(state:SupervisorState):
         logger.error(f"Error in supervisor_step: {e}")
         raise
 
-async def emotional_step(state:EmotionalState) -> Dict[str, Any]:
+async def emotional_step(state:EmotionalState):
     result = await Runner.run(agent_emotional, state["messages"][-1].content)
 
     return {
             "messages": AIMessage(result.final_output.message),
+            "thread_id": state.get("thread_id", "")
+        }
+
+async def summary_step(state:SupervisorState):
+    history_as_text = history_to_text(state["messages"])
+
+    result = await Runner.run(agent_summarty, history_as_text)
+
+    return {
+            "summary": AIMessage(result.final_output.summary),
             "thread_id": state.get("thread_id", "")
         }

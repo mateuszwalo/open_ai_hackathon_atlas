@@ -5,7 +5,7 @@ from typing import Literal
 
 class SupervisorState(TypedDict):
     # big_five: str
-    # summary: str
+    summary: str
     thread_id: str
     action: str
     messages: Annotated[list[AnyMessage], add_messages]
