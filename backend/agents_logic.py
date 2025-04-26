@@ -1,9 +1,10 @@
 import os
 import asyncio
 import logging
+from datetime import datetime
 from dotenv import load_dotenv
 from typing import Dict, Any
-from agents import Agent, Runner
+from agents import Agent, Runner, FileSearchTool, trace
 from prompts import supervisor_prompt, emotional_prompt, summary_prompt
 from typing import Literal
 from states import SupervisorState, EmotionalState
@@ -11,7 +12,12 @@ from pydantic import BaseModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.messages import AnyMessage
 from db import vectorstore
+# from openai import OpenAI
 
+def log(message: str):
+    """Funkcja do logowania z timestampem"""
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} {message}")
+    
 # Konfiguracja logowania
 logging.basicConfig(
     level=logging.INFO,
@@ -43,7 +49,13 @@ agent_emotional = Agent(
     name = "EmotionalAgent",
     model = "gpt-4o-mini",
     instructions = emotional_prompt,
-    output_type = EmotionalStateOutput
+    output_type = EmotionalStateOutput,
+    tools = [
+        FileSearchTool(
+            max_num_results=3,
+            vector_store_ids=["vs_680c96022a7081919f0115cec214ea83"],
+        )
+    ]
 )
 
 agent_summarty = Agent(
@@ -52,6 +64,25 @@ agent_summarty = Agent(
     instructions = summary_prompt,
     output_type = SummaryOutput
 )
+
+
+# client = OpenAI()
+
+# response = client.responses.create(
+#   model="gpt-4.1",
+#   input=[],
+#   tools=[
+#     {
+#       "type": "file_search",
+#       "vector_store_ids": [
+#         "vs_680c96022a7081919f0115cec214ea83"
+#       ]
+#     }
+#   ],
+#   temperature=1,
+#   top_p=1,
+#   store=True
+# )
 
 def history_to_text(messages: list[AnyMessage]) -> str:
     history_as_text = ""
@@ -69,7 +100,8 @@ async def supervisor_step(state:SupervisorState):
         
         history_as_text = history_to_text(state["messages"])
 
-        result = await Runner.run(agent_supervisor, history_as_text)
+        with trace("OpenAI Hackathon"):
+            result = await Runner.run(agent_supervisor, history_as_text)
         if not result:
             raise ValueError("Runner.run returned None.")
 
@@ -83,6 +115,22 @@ async def supervisor_step(state:SupervisorState):
         logger.error(f"Error in supervisor_step: {e}")
         raise
 
+def retrieve_rag_context(query: str, k: int=3) -> str:
+    docs = vectorstore.similarity_search(query, k=k)
+    return "\n---\n".join([d.page_content for d in docs])
+
+async def rag_step(state: EmotionalState):
+    summary = state["summary"].content
+    print(f"RAG summary: {summary}")
+
+    docs = retrieve_rag_context(summary, k=3)
+    print(f"RAG docs: {docs}")
+
+    return {
+        "docs_context": docs,
+        "thread_id": state.get("thread_id", "")
+    }
+
 async def emotional_step(state: EmotionalState):
     context = state.get("psychological_context", "")
     user_input = state["messages"][-1].content
@@ -90,7 +138,9 @@ async def emotional_step(state: EmotionalState):
     # Połączenie kontekstu z wiadomością użytkownika (jeśli Runner nie ma dedykowanego parametru na kontekst)
     enriched_input = f"Kontekst psychologiczny:\n{context}\n\nWiadomość:\n{user_input}"
 
-    result = await Runner.run(agent_emotional, enriched_input)
+    with trace("OpenAI Hackathon"):
+        result = await Runner.run(agent_emotional, enriched_input)
+    print(f"Emotional result: {result.new_items}")
 
     return {
         "messages": [AIMessage(result.final_output.message)],
@@ -102,7 +152,8 @@ async def emotional_step(state: EmotionalState):
 async def summary_step(state:SupervisorState):
     history_as_text = history_to_text(state["messages"])
 
-    result = await Runner.run(agent_summarty, history_as_text)
+    with trace("OpenAI Hackathon"):
+        result = await Runner.run(agent_summarty, history_as_text)
 
     return {
             "summary": AIMessage(result.final_output.summary),

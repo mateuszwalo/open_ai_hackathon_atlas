@@ -12,5 +12,6 @@ class SupervisorState(TypedDict):
 
 class EmotionalState(TypedDict):
     psychological_context: str
+    docs_context: str
     thread_id: str
     messages: Annotated[list[AnyMessage], add_messages]
